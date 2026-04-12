@@ -6,8 +6,46 @@ All non-auth routes expect headers:
 `Authorization: Bearer <token>`
 
 ## 1. Authentication
-*   **POST** `/auth/register`: Create a new User. Returns JWT and user entity.
-*   **POST** `/auth/login`: Issue an access token for valid credentials. Returns JWT and user entity.
+
+### Register a User
+- **Method**: `POST`
+- **Path**: `/auth/register`
+- **Description**: Exposes account creation. Executes Zod parsing enforcing minimal email shapes and standard password complexities (min 8 chars).
+- **Request Body**:
+```json
+{
+  "name": "Jane Zomato",
+  "email": "jane@example.com",
+  "password": "productionGrade123!"
+}
+```
+- **Response** `201 Created`:
+```json
+{
+  "token": "eyJhbGciOi...",
+  "user": {
+    "id": "e2ba261...",
+    "name": "Jane Zomato",
+    "email": "jane@example.com"
+  }
+}
+```
+- **Response** `400 Bad Request` (Email already exists / Validation Failure). Returns strictly mapped field-based JSON structures.
+
+### Authenticate Session
+- **Method**: `POST`
+- **Path**: `/auth/login`
+- **Description**: Authenticates active credentials wrapping encrypted SQL hash verifications.
+- **Request Body**:
+```json
+{
+  "email": "jane@example.com",
+  "password": "productionGrade123!"
+}
+```
+- **Response** `200 OK`: Yields equivalent signed Identity `token` structure as POST register.
+- **Response** `401 Unauthorized`: Triggers natively upon Invalid Credentials logic.
+
 
 ## 2. Projects
 *   **GET** `/projects`: List projects tied to the authenticated caller properties.

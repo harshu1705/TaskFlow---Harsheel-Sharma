@@ -1,6 +1,6 @@
 # TaskFlow
 
-> **Mid-level Engineer · Full Stack / Backend / Frontend**
+> **Full Stack Engineer**
 
 TaskFlow is a production-grade, minimalist task and project management ecosystem. It provides robust capabilities for multi-user project handling, kanban-style task tracking, and role-based assignments, built around a Zomato "Greening India" thematic UI.
 

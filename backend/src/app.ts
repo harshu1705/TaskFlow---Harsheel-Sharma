@@ -2,12 +2,17 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import authRoutes from './routes/auth.routes';
+
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+
+// Routes
+app.use('/auth', authRoutes);
 
 // Healthcheck Route
 app.get('/health', (req: Request, res: Response) => {

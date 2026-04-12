@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 
 import authRoutes from './routes/auth.routes';
+import projectRoutes from './routes/project.routes';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(helmet());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/projects', projectRoutes);
 
 // Healthcheck Route
 app.get('/health', (req: Request, res: Response) => {

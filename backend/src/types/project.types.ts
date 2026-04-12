@@ -1,4 +1,4 @@
-export interface Project {
+export interface ProjectRow {
   id: string;
   name: string;
   description?: string;

@@ -1,7 +1,7 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
-export interface Task {
+export interface TaskRow {
   id: string;
   title: string;
   description?: string;

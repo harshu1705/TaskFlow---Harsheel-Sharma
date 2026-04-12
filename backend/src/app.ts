@@ -4,6 +4,7 @@ import helmet from 'helmet';
 
 import authRoutes from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
+import taskRoutes from './routes/task.routes';
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(helmet());
 // Routes
 app.use('/auth', authRoutes);
 app.use('/projects', projectRoutes);
+app.use('/', taskRoutes); // Mounted at root intercepting /projects/:id/tasks and /tasks/:id
 
 // Healthcheck Route
 app.get('/health', (req: Request, res: Response) => {

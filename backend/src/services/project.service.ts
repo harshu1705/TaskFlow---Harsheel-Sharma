@@ -1,5 +1,5 @@
 import * as repository from '../repositories/project.repository';
-import { CreateProjectInput, UpdateProjectInput } from '../validators/project.validator';
+import { CreateProjectInput, UpdateProjectInput, ProjectQueryInput } from '../validators/project.validator';
 import { ProjectRow } from '../types/project.types';
 
 export class UnauthorizedError extends Error {
@@ -27,8 +27,13 @@ export const createProjectService = async (input: CreateProjectInput, ownerId: s
   return repository.createProject(input, ownerId);
 };
 
-export const getUserProjectsService = async (ownerId: string) => {
-  return repository.findProjectsByOwner(ownerId);
+export const getUserProjectsService = async (ownerId: string, filters: ProjectQueryInput) => {
+  return repository.findProjectsByOwner(ownerId, filters);
+};
+
+export const getProjectStatsService = async (projectId: string, ownerId: string) => {
+  await verifyOwnership(projectId, ownerId);
+  return repository.getProjectStats(projectId);
 };
 
 export const getProjectByIdService = async (projectId: string, ownerId: string) => {

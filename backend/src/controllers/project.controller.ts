@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import * as service from '../services/project.service';
-import { createProjectSchema, updateProjectSchema } from '../validators/project.validator';
+import { createProjectSchema, updateProjectSchema, projectQuerySchema } from '../validators/project.validator';
 
 const handleServiceError = (error: any, res: Response) => {
   if (error instanceof service.NotFoundError) {
@@ -19,7 +19,7 @@ export const createProject = async (req: Request, res: Response) => {
     const ownerId = req.user!.id; // Guaranteed by auth.middleware
     const validatedData = createProjectSchema.parse(req.body);
     const result = await service.createProjectService(validatedData, ownerId);
-    res.status(201).json(result);
+    res.status(201).json({ success: true, data: result });
   } catch (error: any) {
     if (error instanceof ZodError) return res.status(400).json({ error: 'validation failed', fields: error.flatten().fieldErrors });
     handleServiceError(error, res);
@@ -29,8 +29,20 @@ export const createProject = async (req: Request, res: Response) => {
 export const getProjects = async (req: Request, res: Response) => {
   try {
     const ownerId = req.user!.id;
-    const result = await service.getUserProjectsService(ownerId);
-    res.status(200).json(result);
+    const filters = projectQuerySchema.parse(req.query);
+    const result = await service.getUserProjectsService(ownerId, filters);
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
+  } catch (error: any) {
+    handleServiceError(error, res);
+  }
+};
+
+export const getProjectStats = async (req: Request, res: Response) => {
+  try {
+    const ownerId = req.user!.id;
+    const projectId = req.params.id;
+    const stats = await service.getProjectStatsService(projectId, ownerId);
+    res.status(200).json({ success: true, data: stats });
   } catch (error: any) {
     handleServiceError(error, res);
   }

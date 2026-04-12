@@ -1,5 +1,5 @@
 import { query } from '../utils/db';
-import { CreateProjectInput, UpdateProjectInput } from '../validators/project.validator';
+import { CreateProjectInput, UpdateProjectInput, ProjectQueryInput } from '../validators/project.validator';
 import { ProjectRow } from '../types/project.types';
 
 export const createProject = async (input: CreateProjectInput, ownerId: string): Promise<ProjectRow> => {
@@ -10,12 +10,55 @@ export const createProject = async (input: CreateProjectInput, ownerId: string):
   return result.rows[0];
 };
 
-export const findProjectsByOwner = async (ownerId: string): Promise<ProjectRow[]> => {
+export const findProjectsByOwner = async (ownerId: string, filters: ProjectQueryInput): Promise<{ data: ProjectRow[]; pagination: any }> => {
+  // Pure total count bypasses limit blocks
+  const countResult = await query('SELECT COUNT(*) as precise_matches FROM projects WHERE owner_id = $1', [ownerId]);
+  const totalCount = parseInt(countResult.rows[0].precise_matches, 10);
+
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const offset = (page - 1) * limit;
+
   const result = await query(
-    'SELECT * FROM projects WHERE owner_id = $1 ORDER BY created_at DESC',
-    [ownerId]
+    'SELECT * FROM projects WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+    [ownerId, limit, offset]
   );
-  return result.rows;
+
+  return {
+    data: result.rows,
+    pagination: {
+      page,
+      limit,
+      total: totalCount,
+      pages: Math.ceil(totalCount / limit)
+    }
+  };
+};
+
+export const getProjectStats = async (projectId: string) => {
+  const sql = `
+    SELECT
+      COUNT(*) as "totalTasks",
+      COUNT(*) FILTER (WHERE status = 'todo') as todo,
+      COUNT(*) FILTER (WHERE status = 'in_progress') as "inProgress",
+      COUNT(*) FILTER (WHERE status = 'done') as done,
+      COUNT(*) FILTER (WHERE priority = 'high') as "highPriority",
+      COUNT(*) FILTER (WHERE due_date < CURRENT_DATE AND status != 'done') as overdue
+    FROM tasks
+    WHERE project_id = $1
+  `;
+  const result = await query(sql, [projectId]);
+  
+  // pg counts return as stringified BigInts internally, parse down
+  const stats = result.rows[0];
+  return {
+    totalTasks: parseInt(stats.totalTasks, 10) || 0,
+    todo: parseInt(stats.todo, 10) || 0,
+    inProgress: parseInt(stats.inProgress, 10) || 0,
+    done: parseInt(stats.done, 10) || 0,
+    highPriority: parseInt(stats.highPriority, 10) || 0,
+    overdue: parseInt(stats.overdue, 10) || 0,
+  };
 };
 
 export const findProjectById = async (projectId: string): Promise<ProjectRow | null> => {

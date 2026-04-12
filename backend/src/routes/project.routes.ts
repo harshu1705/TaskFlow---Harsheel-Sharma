@@ -5,7 +5,8 @@ import {
   getProjects, 
   getProject, 
   updateProject, 
-  deleteProject 
+  deleteProject,
+  getProjectStats
 } from '../controllers/project.controller';
 
 const router = Router();
@@ -14,6 +15,7 @@ router.use(requireAuth); // Protect all project routes natively
 
 router.post('/', createProject);
 router.get('/', getProjects);
+router.get('/:id/stats', getProjectStats);
 router.get('/:id', getProject);
 router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);

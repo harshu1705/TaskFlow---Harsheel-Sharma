@@ -22,6 +22,11 @@ export const taskFilterSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'done']).optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
   assignee_id: z.string().uuid().optional(),
+  search: z.string().optional(),
+  sortBy: z.enum(['due_date', 'created_at', 'priority', 'status']).optional().default('created_at'),
+  order: z.enum(['asc', 'desc']).optional().default('desc'),
+  page: z.string().optional().default('1').transform(val => parseInt(val, 10)),
+  limit: z.string().optional().default('10').transform(val => parseInt(val, 10)),
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

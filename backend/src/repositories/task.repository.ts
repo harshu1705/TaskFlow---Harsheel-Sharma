@@ -25,7 +25,7 @@ export const createTask = async (projectId: string, input: CreateTaskInput): Pro
   return result.rows[0];
 };
 
-export const getTasksByProject = async (projectId: string, filters: TaskFilterInput): Promise<TaskRow[]> => {
+export const getTasksByProject = async (projectId: string, filters: TaskFilterInput): Promise<{ data: TaskRow[], pagination: any }> => {
   const values: any[] = [projectId];
   const conditions = ['project_id = $1'];
   
@@ -43,10 +43,45 @@ export const getTasksByProject = async (projectId: string, filters: TaskFilterIn
     conditions.push(`assignee_id = $${paramIdx++}`);
     values.push(filters.assignee_id);
   }
+  if (filters.search) {
+    conditions.push(`(title ILIKE $${paramIdx} OR description ILIKE $${paramIdx})`);
+    values.push(`%${filters.search}%`);
+    paramIdx++;
+  }
 
-  const sql = `SELECT * FROM tasks WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`;
+  // Raw count query for pure un-paginated total matching constraints
+  const countSql = `SELECT COUNT(*) as exact_count FROM tasks WHERE ${conditions.join(' AND ')}`;
+  const countResult = await query(countSql, values);
+  const totalCount = parseInt(countResult.rows[0].exact_count, 10);
+
+  // Sorting
+  const sortBy = filters.sortBy || 'created_at';
+  const order = filters.order === 'asc' ? 'ASC' : 'DESC';
+  
+  // Pagination
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const offset = (page - 1) * limit;
+
+  const sql = `
+    SELECT * FROM tasks 
+    WHERE ${conditions.join(' AND ')} 
+    ORDER BY ${sortBy} ${order} 
+    LIMIT $${paramIdx++} OFFSET $${paramIdx++}
+  `;
+  
+  values.push(limit, offset);
   const result = await query(sql, values);
-  return result.rows;
+
+  return {
+    data: result.rows,
+    pagination: {
+      page,
+      limit,
+      total: totalCount,
+      pages: Math.ceil(totalCount / limit)
+    }
+  };
 };
 
 export const findTaskWithProjectOwner = async (taskId: string): Promise<{ task: TaskRow; owner_id: string } | null> => {

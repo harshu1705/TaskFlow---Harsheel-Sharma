@@ -34,7 +34,7 @@ export const getTasks = async (req: Request, res: Response) => {
     const projectId = req.params.projectId;
     const filters = taskFilterSchema.parse(req.query);
     const result = await service.getTasksService(projectId, filters, ownerId);
-    res.status(200).json({ success: true, data: result });
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error: any) {
     if (error instanceof ZodError) return res.status(400).json({ success: false, error: 'invalid filters', fields: error.flatten().fieldErrors });
     handleServiceError(error, res);

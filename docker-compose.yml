@@ -33,8 +33,6 @@ services:
       db:
         condition: service_healthy
     command: sh -c "npm run migrate && npm run start"
-    volumes:
-      - ./backend/migrations:/app/migrations
 
   frontend:
     build:
@@ -46,9 +44,6 @@ services:
       - VITE_API_URL=http://localhost:4000
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
 
 volumes:
   postgres_data:

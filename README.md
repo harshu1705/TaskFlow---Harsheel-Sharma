@@ -1,120 +1,150 @@
-<div align="center">
-  <img src="./frontend/public/vite.svg" alt="TaskFlow Logo" width="80" height="80">
-  <h1 align="center">TaskFlow 🌿</h1>
-  <p align="center">
-    <strong>A Production-Grade, "Greening India" Thematic Task Management Platform</strong>
-  </p>
-  <p align="center">
-    <a href="#tech-stack">Tech Stack</a> • 
-    <a href="#features--usps">Features</a> • 
-    <a href="#quick-start-docker">Quick Start</a> • 
-    <a href="#architecture">Architecture</a> • 
-    <a href="#api--testing">API & Testing</a>
-  </p>
-</div>
+# TaskFlow — Greening India Operations
+
+A full-stack task and project management platform built as part of the Zomato "Greening India" initiative. The idea was to build something that actually feels like a product — not a demo — with proper auth, real-time UI updates, containerized infrastructure, and a design system that makes sense.
 
 ---
 
-## 📖 Overview
+## What this does
 
-**TaskFlow** is a complete, full-stack application built to facilitate enterprise-level sustainability initiatives. Designed conceptually for the logistics industry (e.g., Zomato's "Greening India" operations), it bridges the gap between high-level project goals and actionable developer tasks. 
+You can register an account, create sustainability projects (think: "EV Fleet rollout", "Zero Waste Packaging"), add tasks inside those projects, track their status, and watch your dashboard update with eco-metrics as work gets done. There's a carbon offset calculator baked into the dashboard that grows dynamically as you complete tasks.
 
-It features an aesthetically stunning UI, a secure RESTful backend, and enterprise-grade architectural decisions designed to scale smoothly.
-
-![TaskFlow UI Demo](./docs/demo.gif)
-*(A quick walkthrough of our animated dashboards, Kanban states, and fluid UX).*
+It's a SPA backed by a REST API, with JWT auth, PostgreSQL persistence, and the whole thing boots with a single Docker command.
 
 ---
 
-## ⚡ Tech Stack
+## Tech stack
 
-This project was built leveraging modern, high-performance web standards:
+**Frontend**
+- React + Vite + TypeScript
+- Tailwind CSS + ShadCN UI
+- Zustand (global state + auth persistence)
+- TanStack Query (data fetching + cache)
+- Framer Motion (animations)
+- React CountUp (animated stat widgets)
 
-### Frontend
-- **React.js & Vite** for lightning-fast HMR and optimized builds.
-- **TypeScript** for strict end-to-end type safety.
-- **Tailwind CSS & ShadCN UI** for a highly bespoke, accessible, and responsive design system.
-- **Zustand & TanStack Query** for persistent global state and asynchronous cache handling.
-- **Framer Motion & React-CountUp** for delightful micro-interactions.
+**Backend**
+- Node.js + Express + TypeScript
+- PostgreSQL (via `pg` driver, raw SQL — no ORM)
+- JWT + Bcrypt for auth
+- Zod for request validation
+- Layered architecture: Controller → Service → Repository
 
-### Backend
-- **Node.js & Express.js** for a robust, non-blocking asynchronous REST API.
-- **PostgreSQL** as the highly relational, atomic source of truth.
-- **TypeScript** ensuring exact domain-model alignment with the frontend.
-- **JWT & Bcrypt** for secure, stateless authentication flows.
-- **Docker & Docker Compose** for guaranteed zero-configuration deployment.
-
----
-
-## ✨ Features & USPs
-
-During the development lifecycle, we prioritized features that simulate a real-world, premium product rather than just a minimum viable prototype:
-
-1. **Dynamic Sustainability Metrics**: Task completion mathematically calculates real-world environmental offsets (e.g., *Tasks Done × 3.5 = kg CO₂ offset*).
-2. **Beautiful Light/Dark Modes**: Fully integrated Tailwind `dark:` variants ensure seamless transitions out-of-the-box, protecting user accessibility.
-3. **Optimistic UI Updates**: Leveraging Tanstack Mutations, deletions and creations happen instantly on the UI without waiting for network round-trips.
-4. **Keyboard Centric UX**: Advanced accessibility shortcuts (e.g., Press `N` to deploy a New Project).
-5. **Graceful Error Handling**: 100% of network failures, duplicate emails, and validation errors are safely trapped and displayed as beautiful toast notifications.
+**Infrastructure**
+- Docker + Docker Compose
+- PostgreSQL healthcheck (backend waits for DB to be ready before migrating)
+- Auto-runs migrations + seed data on first boot
 
 ---
 
-## 🚀 Quick Start (Docker)
+## Running locally
 
-Reviewing this repository is completely frictionless. We utilize a containerized environment to guarantee it works identically on every device.
-
-### 1. Requirements
-- Docker Desktop installed and running.
-
-### 2. Booting the Servers
-Clone the repository and launch the orchestrated containers:
+You just need Docker Desktop installed. That's it.
 
 ```bash
-git clone https://github.com/your-username/taskflow.git
-cd taskflow
+git clone https://github.com/harshu1705/TaskFlow---Harsheel-Sharma.git
+cd TaskFlow---Harsheel-Sharma
 
-# Boot Database, Backend, and Frontend simultaneously
-docker compose up --build -d
+docker compose up --build
 ```
 
-### 3. Access
-- **Frontend App**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:4000/api](http://localhost:4000/api)
+Wait about 30–60 seconds for everything to build and the DB to initialize.
 
-> **💡 Reviewer Time-Saver:**
-> You do not need to register a new account to test the platform. At the `/login` screen, use the embedded quick demo credentials:
-> **Email**: `test@example.com` | **Password**: `password123`
+- **App**: http://localhost:3000  
+- **API**: http://localhost:4000
 
----
+To stop everything:
+```bash
+docker compose down
+```
 
-## 🏛️ Architecture & Scaling Design
-
-TaskFlow implements a strict layered architecture pattern on the Node backend:
-`Controller (HTTP Layer)` → `Service (Business Logic)` → `Repository (Data Access)`
-
-**Why this structure over a monolith router?**
-- **Separation of Concerns**: Decouples business logic from HTTP transport, making the framework completely agnostic.
-- **Testability**: Services can be tested completely isolated from Express `req/res` contexts and Postgres querying bottlenecks.
-- **Scalability**: Allows smooth pivots toward microservices should the platform expand to millions of concurrent operations.
+To wipe the database and start fresh:
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 ---
 
-## 🧪 API & Testing
+## Demo credentials
 
-### Interactive Postman Collection
-To thoroughly validate the REST API endpoints without navigating the GUI, a fully configured Postman environment is bundled in the source code.
-👉 **[Download API Collection](./docs/TaskFlow.postman_collection.json)** *(Import directly into Postman)*
+The database is pre-seeded with a demo account and sample projects so you don't have to set anything up manually.
 
-### Live Endpoints Overview
-| Method | Endpoint | Description | Auth Required |
-| --- | --- | --- | --- |
-| `POST` | `/auth/register` | Creates a new user | ❌ |
-| `POST` | `/auth/login` | Authenticates and returns JWT | ❌ |
-| `GET` | `/projects` | Fetches paginated user projects | ✅ |
-| `POST` | `/projects` | Creates a new project | ✅ |
-| `DELETE` | `/projects/:id`| Hard deletes a project | ✅ |
+```
+Email:    test@example.com
+Password: password123
+```
+
+You'll land on the dashboard with 3 Greening India projects already created (EV fleet, zero-waste packaging, solar kitchens) — each with multiple tasks in different states so the UI actually has something to show.
 
 ---
 
-<div align="center">
-  <i>Crafted with passion for clean code and excellent user experiences.</i>
-</div>
+## API
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/register` | — | Create account |
+| POST | `/auth/login` | — | Login, returns JWT |
+| GET | `/projects` | ✓ | List projects (paginated) |
+| POST | `/projects` | ✓ | Create project |
+| PUT | `/projects/:id` | ✓ | Update project |
+| DELETE | `/projects/:id` | ✓ | Delete project |
+| GET | `/projects/:id/tasks` | ✓ | List tasks for a project |
+| POST | `/projects/:id/tasks` | ✓ | Create task |
+| PUT | `/projects/:id/tasks/:taskId` | ✓ | Update task |
+| DELETE | `/projects/:id/tasks/:taskId` | ✓ | Delete task |
+
+A Postman collection is included at [`docs/TaskFlow.postman_collection.json`](./docs/TaskFlow.postman_collection.json). Import it, set `baseUrl` to `http://localhost:4000` and `jwtToken` to the token from login, and all endpoints are ready to test.
+
+---
+
+## Project structure
+
+```
+taskflow/
+├── backend/
+│   ├── src/
+│   │   ├── config/          # Env validation (Zod)
+│   │   ├── controllers/     # Express route handlers
+│   │   ├── services/        # Business logic
+│   │   ├── repositories/    # SQL queries
+│   │   ├── middlewares/     # Auth guard, error handler
+│   │   ├── validators/      # Request schemas
+│   │   └── utils/           # DB pool, JWT helpers, migration runner
+│   └── migrations/          # SQL migration + seed files
+├── frontend/
+│   └── src/
+│       ├── components/      # UI primitives + layout
+│       ├── pages/           # Route-level components
+│       ├── store/           # Zustand auth + theme
+│       ├── services/        # Axios API client
+│       └── hooks/           # Custom hooks
+└── docker-compose.yml
+```
+
+---
+
+## Architecture decisions
+
+**Why raw SQL over an ORM?**  
+Prisma or Drizzle would've worked fine, but I wanted full control over the queries — especially for pagination and filtering. It also means there's no magic layer to debug if something goes wrong.
+
+**Why the Controller → Service → Repository split?**  
+It keeps things testable. The service layer holds all business logic and doesn't know anything about HTTP. The repository layer handles SQL and doesn't know anything about business rules. Swapping PostgreSQL for something else, or extracting the service into a microservice later, becomes a bounded change.
+
+**Why Zustand over Redux?**  
+Much less boilerplate for the scope of state this app needs. The `persist` middleware handles auth token hydration on refresh automatically, which is what makes the "stay logged in across refreshes" behaviour work.
+
+---
+
+## Things I'd add with more time
+
+- Proper role-based access (project owner vs. member vs. viewer)
+- Real drag-and-drop Kanban columns for tasks
+- Email notifications when tasks are assigned
+- File attachments on tasks
+- Activity/audit log per project
+- Unit and integration tests for the service layer
+
+---
+
+Built by **Harsheel Sharma**

@@ -1,10 +1,11 @@
-import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft, Plus, Pencil, Trash2, X, Loader2, Search,
   CheckCircle2, Clock, Circle, AlertCircle, ChevronDown
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
 type Task = {
@@ -27,6 +28,7 @@ const PRIORITY_CONFIG = {
 
 function TaskModal({ projectId, task, onClose }: { projectId: string; task?: Task; onClose: () => void }) {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [form, setForm] = useState({
     title: task?.title ?? '', description: task?.description ?? '',
     status: task?.status ?? 'todo', priority: task?.priority ?? 'medium', due_date: task?.due_date?.split('T')[0] ?? '',
@@ -38,8 +40,17 @@ function TaskModal({ projectId, task, onClose }: { projectId: string; task?: Tas
       task
         ? api.put(`/tasks/${task.id}`, data).then(r => r.data)
         : api.post(`/projects/${projectId}/tasks`, { ...data, due_date: data.due_date ? new Date(data.due_date).toISOString() : undefined }).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', projectId] }); qc.invalidateQueries({ queryKey: ['stats', projectId] }); onClose(); },
-    onError: (e: any) => setError(e.response?.data?.message || e.response?.data?.fields?.title?.[0] || 'Failed to save task'),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['tasks', projectId] }); 
+      qc.invalidateQueries({ queryKey: ['stats', projectId] }); 
+      toast({ title: "Success", description: `Task ${task ? 'updated' : 'created'} successfully.` });
+      onClose(); 
+    },
+    onError: (e: any) => {
+      const msg = e.response?.data?.message || e.response?.data?.fields?.title?.[0] || 'Failed to save task';
+      setError(msg);
+      toast({ variant: "destructive", title: "Error", description: msg });
+    },
   });
 
   return (
@@ -112,6 +123,7 @@ function TaskModal({ projectId, task, onClose }: { projectId: string; task?: Tas
 export default function ProjectDetailPage() {
   const { id: projectId } = useParams<{ id: string }>();
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [modal, setModal] = useState<'create' | Task | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -142,7 +154,12 @@ export default function ProjectDetailPage() {
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => api.delete(`/tasks/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', projectId] }); qc.invalidateQueries({ queryKey: ['stats', projectId] }); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['tasks', projectId] }); 
+      qc.invalidateQueries({ queryKey: ['stats', projectId] }); 
+      toast({ description: "Task deleted successfully." });
+    },
+    onError: () => toast({ variant: "destructive", description: "Failed to delete task." })
   });
 
   return (
@@ -236,13 +253,27 @@ export default function ProjectDetailPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <motion.tbody 
+                initial="hidden" animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                }}
+                className="divide-y divide-slate-100 dark:divide-slate-800"
+              >
                 {tasks.map((task) => {
                   const S = STATUS_CONFIG[task.status];
                   const P = PRIORITY_CONFIG[task.priority];
                   const SIcon = S.icon;
                   return (
-                    <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <motion.tr 
+                      key={task.id} 
+                      variants={{
+                        hidden: { opacity: 0, x: -10 },
+                        visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
+                      }}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+                    >
                       <td className="px-6 py-4">
                         <div className="font-medium text-sm text-slate-900 dark:text-white">{task.title}</div>
                         {task.description && <div className="text-xs text-slate-500 mt-0.5 truncate max-w-xs">{task.description}</div>}
@@ -273,10 +304,10 @@ export default function ProjectDetailPage() {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         )}

@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { FolderKanban, Plus, Pencil, Trash2, ArrowRight, Leaf, Loader2, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
 type Project = { id: string; name: string; description?: string; created_at: string; };
 
 function ProjectModal({ project, onClose }: { project?: Project; onClose: () => void }) {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [form, setForm] = useState({ name: project?.name ?? '', description: project?.description ?? '' });
   const [error, setError] = useState('');
 
@@ -16,8 +19,16 @@ function ProjectModal({ project, onClose }: { project?: Project; onClose: () => 
       project
         ? api.put(`/projects/${project.id}`, data).then(r => r.data)
         : api.post('/projects', data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['projects'] }); onClose(); },
-    onError: (e: any) => setError(e.response?.data?.message || 'Failed to save project'),
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ['projects'] }); 
+      toast({ title: "Success", description: `Project ${project ? 'updated' : 'created'} successfully.` });
+      onClose(); 
+    },
+    onError: (e: any) => {
+      const msg = e.response?.data?.message || 'Failed to save project';
+      setError(msg);
+      toast({ variant: "destructive", title: "Error", description: msg });
+    },
   });
 
   return (
@@ -106,10 +117,24 @@ function ProjectCard({ project, onEdit, onDelete }: { project: Project; onEdit: 
 
 export default function ProjectsPage() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [modal, setModal] = useState<'create' | Project | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 9;
+
+  // USP 5: Keyboard Shortcut UX (Press N for new project)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+      if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setModal('create');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ['projects', page],
@@ -123,7 +148,11 @@ export default function ProjectsPage() {
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      toast({ description: "Project deleted successfully." });
+    },
+    onError: () => toast({ variant: "destructive", description: "Failed to delete project." })
   });
 
   return (
@@ -168,8 +197,8 @@ export default function ProjectsPage() {
           <div className="w-20 h-20 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-5">
             <Leaf className="w-10 h-10 text-green-600" />
           </div>
-          <h4 className="font-semibold text-slate-900 dark:text-white text-lg mb-1">No projects yet 🌱</h4>
-          <p className="text-sm text-slate-500 mb-6 max-w-xs">Start building your sustainability roadmap. Create your first project to get started.</p>
+          <h4 className="font-semibold text-slate-900 dark:text-white text-lg mb-1">🌱 No initiatives launched yet.</h4>
+          <p className="text-sm text-slate-500 mb-6 max-w-xs">Start building a greener India today. Create your first project to get started.</p>
           <button onClick={() => setModal('create')}
             className="flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold"
             style={{ background: 'linear-gradient(135deg, #14532D, #16a34a)' }}>
@@ -177,16 +206,30 @@ export default function ProjectsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((project) => (
-            <ProjectCard 
-              key={project.id} 
-              project={project} 
-              onEdit={() => setModal(project)}
-              onDelete={() => { confirm('Delete this project?') && deleteMut.mutate(project.id) }} 
-            />
+        <motion.div 
+          initial="hidden" animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {filtered.map((project, i) => (
+            <motion.div
+              key={project.id}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+              }}
+            >
+              <ProjectCard 
+                project={project} 
+                onEdit={() => setModal(project)}
+                onDelete={() => { confirm('Delete this project?') && deleteMut.mutate(project.id) }} 
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Pagination */}

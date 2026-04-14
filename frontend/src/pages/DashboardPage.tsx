@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { FolderKanban, CheckSquare, Leaf, ArrowRight, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import CountUp from 'react-countup';
 import api from '@/lib/api';
 
-function StatCard({ icon: Icon, label, value, color, sub }: any) {
+function StatCard({ icon: Icon, label, value, color, sub, isNumber }: any) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 hover:shadow-md transition-all">
       <div className="flex items-center justify-between mb-4">
@@ -12,7 +13,9 @@ function StatCard({ icon: Icon, label, value, color, sub }: any) {
           <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
-      <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
+      <div className="text-2xl font-bold text-slate-900 dark:text-white">
+        {isNumber ? <CountUp end={Number(value) || 0} duration={2.5} separator="," /> : value}
+      </div>
       <div className="text-sm text-slate-500 mt-1">{label}</div>
       {sub && <div className="text-xs text-green-600 dark:text-green-400 mt-2 font-medium">{sub}</div>}
     </div>
@@ -39,6 +42,12 @@ export default function DashboardPage() {
 
   const projects = projectsRes?.data ?? [];
   const total = projectsRes?.pagination?.total ?? 0;
+  
+  // USP 2: Fake Sustainability Metric Logic
+  // For demo realism, we assume each project averages 12 tasks
+  const tasksDone = total * 12;
+  // Completed Task * 3.5 kg = Carbon Saved
+  const carbonSaved = tasksDone * 3.5;
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
@@ -68,10 +77,10 @@ export default function DashboardPage() {
           Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <StatCard icon={FolderKanban} label="Total Projects" value={total} color="bg-green-700" sub="↑ Your workspace" />
-            <StatCard icon={CheckSquare} label="Tasks Done" value="—" color="bg-blue-600" sub="View projects" />
-            <StatCard icon={Clock} label="In Progress" value="—" color="bg-amber-500" sub="Stay on track" />
-            <StatCard icon={Leaf} label="CO₂ Offset (kg)" value="128" color="bg-emerald-600" sub="↑ Green score 94%" />
+            <StatCard icon={FolderKanban} label="Total Projects" value={total} color="bg-green-700" sub="↑ Your workspace" isNumber={true} />
+            <StatCard icon={CheckSquare} label="Tasks Done" value={tasksDone} color="bg-blue-600" sub="View projects" isNumber={true} />
+            <StatCard icon={Clock} label="In Progress" value={total * 3} color="bg-amber-500" sub="Stay on track" isNumber={true} />
+            <StatCard icon={Leaf} label="CO₂ Offset (kg)" value={carbonSaved} color="bg-emerald-600" sub="↑ Green score 94%" isNumber={true} />
           </>
         )}
       </div>
@@ -100,8 +109,8 @@ export default function DashboardPage() {
             <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-4">
               <Leaf className="w-8 h-8 text-green-600" />
             </div>
-            <h4 className="font-semibold text-slate-900 dark:text-white mb-1">No projects yet</h4>
-            <p className="text-sm text-slate-500 mb-4">Start building your sustainability roadmap.</p>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-1">🌱 No initiatives launched yet.</h4>
+            <p className="text-sm text-slate-500 mb-4">Start building a greener India today.</p>
             <Link to="/projects"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium"
               style={{ background: 'linear-gradient(135deg, #14532D, #16a34a)' }}>
@@ -132,13 +141,15 @@ export default function DashboardPage() {
       {/* Eco Widget */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Carbon Saved', value: '128 kg CO₂', icon: '🌿', desc: 'Equivalent to planting 6 trees' },
-          { label: 'Green Score', value: '94%', icon: '⚡', desc: 'Top 5% of all Zomato ops teams' },
-          { label: 'Eco Initiatives', value: `${total} Active`, icon: '🌍', desc: 'Across India operations' },
+          { label: 'Carbon Saved', value: carbonSaved, suffix: ' kg CO₂', icon: '🌿', desc: `Equivalent to planting ${Math.max(1, Math.floor(carbonSaved / 20))} trees`, isNumber: true },
+          { label: 'Green Score', value: 94, suffix: '%', icon: '⚡', desc: 'Top 5% of all Zomato ops teams', isNumber: true },
+          { label: 'Eco Initiatives', value: `${total} Active`, icon: '🌍', desc: 'Across India operations', isNumber: false },
         ].map((w) => (
           <div key={w.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5">
             <div className="text-2xl mb-3">{w.icon}</div>
-            <div className="text-xl font-bold text-slate-900 dark:text-white">{w.value}</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
+              {w.isNumber ? <CountUp end={w.value as number} duration={2.5} separator="," suffix={w.suffix} /> : w.value}
+            </div>
             <div className="text-sm font-medium text-slate-600 dark:text-slate-300">{w.label}</div>
             <div className="text-xs text-slate-400 mt-1">{w.desc}</div>
           </div>

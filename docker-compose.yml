@@ -27,8 +27,8 @@ services:
       - db
     command: sh -c "npm run migrate && npm run start"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend/src:/app/src
+      - ./backend/migrations:/app/migrations
 
   frontend:
     build:

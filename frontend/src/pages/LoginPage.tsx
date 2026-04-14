@@ -14,6 +14,15 @@ export function LoginPage() {
           <p className="text-muted-foreground mt-2">Empowering sustainable operations</p>
         </div>
         
+        {/* USP 4: Demo Credentials Banner */}
+        <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex flex-col items-center justify-center text-sm shadow-sm backdrop-blur-sm">
+          <p className="font-semibold text-green-800 dark:text-green-300 mb-1">🚀 Quick Demo Access</p>
+          <div className="flex flex-col items-center text-green-700 dark:text-green-400 font-mono text-xs mt-1">
+            <span>Email: test@example.com</span>
+            <span>Pass: password123</span>
+          </div>
+        </div>
+        
         <Card className="border-border/50 shadow-sm backdrop-blur-xl bg-card/95">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>

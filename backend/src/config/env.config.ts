@@ -6,6 +6,7 @@ const envSchema = z.object({
     PORT: z.string().default("4000"),
     DATABASE_URL: z.string().url(),
     JWT_SECRET: z.string().min(10),
+    JWT_EXPIRES_IN: z.string().default("24h"),
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development')
 });
 

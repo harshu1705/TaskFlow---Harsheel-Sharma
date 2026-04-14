@@ -21,7 +21,9 @@ export default function AuthPage() {
       return res.data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      // Backend returns: { success: true, data: { user, token } }
+      const { user, token } = data.data;
+      setAuth(user, token);
       navigate('/dashboard');
     },
     onError: (err: any) => {
@@ -76,6 +78,12 @@ export default function AuthPage() {
                 <div className="text-xs text-green-200 mt-1">{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Demo Banner */}
+          <div className="mt-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 text-center">
+            <p className="text-green-200 text-xs font-semibold mb-1">🚀 Quick Demo Access</p>
+            <p className="text-white font-mono text-xs">test@example.com / password123</p>
           </div>
         </div>
       </div>

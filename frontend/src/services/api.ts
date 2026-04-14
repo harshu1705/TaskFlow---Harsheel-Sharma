@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// ✅ FIXED: Must match backend port (4000) defined in docker-compose.yml
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -10,7 +11,7 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor to attach token
+// Request interceptor to attach JWT token on every request
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
@@ -19,20 +20,16 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle global errors (e.g., auth failure)
+// Response interceptor: auto-logout on 401, gracefully handle network errors
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Auto logout if 401 response returned from api
       useAuthStore.getState().logout();
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
